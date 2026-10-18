@@ -1,0 +1,27 @@
+---
+title: "ST 558 Project 2"
+author: Ryan Clark
+date: 2026-10-28
+abstract: |
+  The purpose of this report is to explore and summarize the Banking Dataset that will be used to help generate a Shiny app.
+format: html
+---
+
+(narrative?)
+
+```{r}
+#| message: false
+library(tidyverse)
+
+# Read in both datasets (semicolon-delimited)
+train <- read_delim("data/train.csv", delim = ";")
+test  <- read_delim("data/test.csv", delim = ";")
+
+# Combine datasets
+bank_combined <- bind_rows(train, test)
+nrow(bank_combined)
+
+# Unique data
+bank <- distinct(bank_combined)
+nrow(bank)
+```
