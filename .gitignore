@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# R execution & workspace files
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.Renviron
+
+# Quarto & R Markdown
+/.quarto/
+*_cache/
+**/*.quarto_ipynb
