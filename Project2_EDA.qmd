@@ -17,6 +17,9 @@ library(tidyverse)
 train <- read_delim("data/train.csv", delim = ";")
 test  <- read_delim("data/test.csv", delim = ";")
 
+str(train)
+str(test)
+
 # Combine datasets
 bank_combined <- bind_rows(train, test)
 nrow(bank_combined)
@@ -25,3 +28,36 @@ nrow(bank_combined)
 bank <- distinct(bank_combined)
 nrow(bank)
 ```
+
+```{r}
+# Clean data
+bank <- bank |>
+  mutate(
+    # Collapse 12 job categories into 4 groups
+    job_group = if_else(job %in% c("management", "admin.", "technician", 
+                                   "entrepreneur", "self-employed"), "White-collar",
+                if_else(job %in% c("blue-collar", "services", "housemaid"), "Blue-collar/Service",
+                if_else(job %in% c("retired", "student", "unemployed"), "Not working",
+                    "Unknown"))),
+    
+    job_group = factor(job_group, levels = c("White-collar", "Blue-collar/Service",
+                                             "Not working", "Unknown")),
+    
+    # Rearrange calendar order
+    month = factor(month, levels = c("jan", "feb", "mar", "apr", "may", "jun",
+                                     "jul", "aug", "sep", "oct", "nov", "dec")),
+
+    # Create col: -1 = "never previously contacted" = No, otherwise Yes
+    prev_contacted = factor(if_else(pdays == -1, "No", "Yes"), levels = c("No", "Yes")),
+    
+    # Set -1 values to NA
+    pdays = ifelse(pdays == -1, NA, pdays),
+    
+    # Remaining text columns become factors
+    across(where(is.character), as.factor)
+  )
+
+saveRDS(bank, "app/bank_clean.rds")
+```
+
+
