@@ -29,6 +29,12 @@ bank <- distinct(bank_combined)
 nrow(bank)
 ```
 
+We see that from our $49,732$ rows, only $45,211$ of them are unique. That means $49,732 - 45,211 = 4521$ of the rows are duplicates. We removed these duplicates so now `bank` contains only the unique data.
+
+While not a necessary change, we will create the `job_group` variable that collapses the 12 job categories into 4 broad groups: White-collar, Blue-collar/Service, Not working, and Unknown. This is to help tidy up the radio button on our Shiny app, as well as make plots easier to interpret. That said, we will retain the 12 categories under the `job` variable for users desiring those details.
+
+(check this narrative) Importantly, the variable `pdays`, which represents the number of days since the client was last contacted in a previous campaign, will take the value `-1` if the individual was "never contacted before". This negative value will impact the slider as well as computations on this variable. Since this information is still valuable, we create a factor column (`prev_contacted`) to indicate `-1` with `"No"`. Then we recode `-1` to `NA`, as well as leave `pdays` out of slider and dropdown options, to avoid the aforementioned issues. 
+
 ```{r}
 # Clean data
 bank <- bank |>
@@ -59,5 +65,37 @@ bank <- bank |>
 
 saveRDS(bank, "app/bank_clean.rds")
 ```
+
+Now that our data is clean we are ready to explore it. Let's start with some one-way contingency tables. We will look at the total amount of subscribers and the raw distribution into our 4 broad job categories.
+
+```{r}
+# How many clients subscribed overall?
+table(bank$y)
+
+# How many clients fall in each job group?
+table(bank$job_group)
+```
+(comment on table)
+
+Next we will build two-way contingency tables. We'll examine how subscriptions vary by job group and if they were previously contacted.
+
+```{r}
+# Subscriptions by job group, with the percent who subscribed
+bank |>
+  group_by(job_group, y) |>
+  summarize(count = n(), .groups = "drop") |>
+  pivot_wider(names_from = y, values_from = count) |>
+  mutate(pct_yes = round(100 * yes / (no + yes), 1))
+
+# Subscriptions by whether the client was contacted in a previous campaign
+bank |>
+  group_by(prev_contacted, y) |>
+  summarize(count = n(), .groups = "drop") |>
+  pivot_wider(names_from = y, values_from = count) |>
+  mutate(pct_yes = round(100 * yes / (no + yes), 1))
+```
+
+(comment on table)
+
 
 
