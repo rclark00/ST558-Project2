@@ -97,5 +97,16 @@ bank |>
 
 (comment on table)
 
+```{r}
+# Mean, median, and SD of four numeric variables by subscription outcome
+bank |>
+  select(y, age, balance, duration, campaign) |>
+  pivot_longer(cols = -y, names_to = "variable", values_to = "value") |>
+  group_by(variable, y) |>
+  summarize(mean = round(mean(value), 1),
+            median = median(value),
+            sd = round(sd(value), 1),
+            .groups = "drop")
+```
 
-
+(comment)
