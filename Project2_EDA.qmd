@@ -110,3 +110,30 @@ bank |>
 ```
 
 (comment)
+
+Now we will generate several figures to further explore the data, starting with a stacked bar chart of subscription rates by job group.
+
+```{r}
+ggplot(bank, aes(x = job_group, fill = y)) +
+  geom_bar(position = "fill") +
+  labs(x = "Job Group",
+       y = "Proportion of Clients",
+       title = "Subscription Rate by Job Group") +
+  scale_fill_discrete("Subscribed")
+```
+
+Clients not working appear to have the highest subscription rate, while blue-collar and service workers have the lowest.
+
+Next we plot subscriptions by level of education.
+
+```{r}
+ggplot(bank, aes(x = education, fill = y)) +
+  geom_bar(position = "dodge") +
+  labs(x = "Education Level",
+       y = "Number of Clients",
+       title = "Subscriptions by Education Level") +
+  scale_fill_discrete("Subscribed")
+```
+
+Clearly, the majority of the bank's clients possess a secondary education. Therefore, it intuitively follows that, in terms of raw counts, most subscribers have a secondary education. However, estimating from the figure, it appears that the rate of subscription is higher in the tertiary group, which has only a couple hundred fewer subscribers yet about ten thousand fewer non-subscribers. This exemplifies how raw numbers can be misleading.
+
