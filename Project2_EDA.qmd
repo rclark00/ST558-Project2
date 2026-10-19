@@ -163,5 +163,38 @@ ggplot(bank, aes(x = job_group, y = duration, fill = y)) +
 
 Call duration has a noticeably larger IQR for those who subscribed across all job groups, all with higher medians than the non-subscribers. Blue-collar/Service had the highest median of the subscribers, while the boxes of the non-subscribers were very similar. No outliers were detected below Q1. Non-subscribers, being the larger group with the smaller IQR, had wider outlier ranges than subscribers, respectively.
 
+The fifth plot we'll make is a faceted scatterplot of age vs. balance.
 
+```{r}
+ggplot(bank |> filter(balance < 20000),
+       aes(x = age, y = balance, color = y)) +
+  geom_point(alpha = 0.3) +
+  facet_wrap(~ job_group) +
+  labs(x = "Age (years)",
+       y = "Average Yearly Balance (euros)",
+       title = "Age vs. Balance by Job Group",
+       subtitle = "Clients with balances under 20,000 euros") +
+  scale_color_discrete("Subscribed")
+```
 
+We observe fairly dense clouds with balances near zero for all job groups except Unknown, with White-collar being the most dense. While we cap the balance so as not to stretch out the plots, White-collar also seems to have greater density around the cap (probably influenced by group size). The two working groups have fairly strong cut offs around age 60, while Not working appears the most spread out across the age range. The overlap between subscribers and non-subscribers suggest that balance is not great for distinguishing them.
+
+Lastly, we make a heatmap of subscription rate by month and job group.
+
+```{r}
+bank |>
+  filter(job_group != "Unknown") |>
+  group_by(job_group, month) |>
+  summarize(pct_yes = 100 * mean(y == "yes"), .groups = "drop") |>
+  ggplot(aes(x = month, y = job_group, fill = pct_yes)) +
+  geom_tile(color = "white") +
+  geom_text(aes(label = round(pct_yes))) +
+  scale_fill_gradient("% Subscribed", low = "white", high = "steelblue") +
+  labs(x = "Month of Last Contact",
+       y = "Job Group",
+       title = "Subscription Rate by Month and Job Group")
+```
+
+Here we track the subscription rates over the course of the (pooled) years for the job groups (excluding Unknown due to small sample size). March stands out in the first half of the year as having the greatest subscriber rates, regardless of job category. Subscriber rates generally pick up again at the end of the year, with an odd exception in November. Between groups, Blue-collar/Service appears to simultaneously have the lowest rates for most months yet the highest recorded rates. Importantly, this map misses call volume, which limits our interpretation of these rates.
+
+(Conclusion)
