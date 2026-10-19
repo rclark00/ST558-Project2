@@ -137,3 +137,31 @@ ggplot(bank, aes(x = education, fill = y)) +
 
 Clearly, the majority of the bank's clients possess a secondary education. Therefore, it intuitively follows that, in terms of raw counts, most subscribers have a secondary education. However, estimating from the figure, it appears that the rate of subscription is higher in the tertiary group, which has only a couple hundred fewer subscribers yet about ten thousand fewer non-subscribers. This exemplifies how raw numbers can be misleading.
 
+Next is a density plot of age by subscription status.
+
+```{r}
+ggplot(bank, aes(x = age, fill = y)) +
+  geom_density(alpha = 0.5) +
+  labs(x = "Age (years)",
+       y = "Density",
+       title = "Age Distribution by Subscription Outcome") +
+  scale_fill_discrete("Subscribed")
+```
+
+The two densities are quite similar in shape. Both subscribers and non-subscribers are right-skewed with a peak around 30 years old. Non-subscribers are concentrated between roughly 30 to 55 years old, with naturally sharper slopes that non-subscribers outside of this age range. The subscribers have quite a long tail past 75.
+
+We then create a boxplot for call duration by job group and subscription.
+
+```{r}
+ggplot(bank, aes(x = job_group, y = duration, fill = y)) +
+  geom_boxplot() +
+  labs(x = "Job Group",
+       y = "Call Duration (seconds)",
+       title = "Last Call Duration by Job Group and Subscription Outcome") +
+  scale_fill_discrete("Subscribed")
+```
+
+Call duration has a noticeably larger IQR for those who subscribed across all job groups, all with higher medians than the non-subscribers. Blue-collar/Service had the highest median of the subscribers, while the boxes of the non-subscribers were very similar. No outliers were detected below Q1. Non-subscribers, being the larger group with the smaller IQR, had wider outlier ranges than subscribers, respectively.
+
+
+
