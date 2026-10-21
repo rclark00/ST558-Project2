@@ -79,7 +79,34 @@ ui <- fluidPage(
 
 # Define server logic
 server <- function(input, output, session) {
-  # Placeholder
+  # This object holds data subset
+  subset_vals <- reactiveValues(data = NULL)  # NULL default
+  
+  # observeEvent() to look for action button
+  observeEvent(input$subset_button, {
+    if(input$job_sub == "all"){
+      job_vals <- levels(bank$job_group)
+    } else {
+      job_vals <- input$job_sub
+    }
+    
+    if(input$edu_sub == "all"){
+      edu_vals <- levels(bank$education)
+    } else {
+      edu_vals <- input$edu_sub
+    }
+    
+    if(input$prev_sub == "all"){
+      prev_vals <- levels(bank$prev_contacted)
+    } else {
+      prev_vals <- input$prev_sub
+    }
+    
+    subset_vals$data <- bank |>
+      filter(job_group %in% job_vals,
+             education %in% edu_vals,
+             prev_contacted %in% prev_vals)
+  })
 }
 
 
