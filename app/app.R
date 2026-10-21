@@ -78,7 +78,11 @@ ui <- fluidPage(
         
         ### DATA DOWNLOAD TAB ###
         tabPanel("Data Download",
-                 p("(INSERT Data table and download button)")
+                 # Show download button once data has been selected
+                 conditionalPanel("input.subset_button",
+                                  downloadButton("download_data", "Download Data (.csv)")),
+                 br(),
+                 DT::dataTableOutput("data_table")
         ),
         
         
@@ -177,6 +181,26 @@ server <- function(input, output, session) {
              get(input$num2_var) >= input$num2_range[1],
              get(input$num2_var) <= input$num2_range[2])
   })
+  # Data table of the subsetted data
+  output$data_table <- DT::renderDataTable({
+    # Default message
+    validate(
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Sample the data' button.")
+    )
+    DT::datatable(data = subset_vals$data,
+                  options = list(pageLength = 10),
+                  rownames = FALSE)
+  })
+  
+  # Download the subsetted data
+  output$download_data <- downloadHandler(
+    filename = function() {
+      "bank_subset.csv"
+    },
+    content = function(file) {
+      write_csv(subset_vals$data, file)
+    }
+  )
 }
 
 
