@@ -13,7 +13,25 @@ ui <- fluidPage(
   sidebarLayout(
     sidebarPanel(
       h3("Subset the Data"),
-      p("(INSERT Subsetting widgets and button)")
+      # Job group button
+      radioButtons("job_sub",
+                   "Job Group",
+                   choiceNames = c("All", "White-collar", "Blue-collar/Service",
+                                   "Not working", "Unknown"),
+                   choiceValues = c("all", "White-collar", "Blue-collar/Service",
+                                    "Not working", "Unknown")),
+      # Education button
+      radioButtons("edu_sub",
+                   "Education Level",
+                   choiceNames = c("All", "Primary", "Secondary", "Tertiary", "Unknown"),
+                   choiceValues = c("all", "primary", "secondary", "tertiary", "unknown")),
+      # Previously contacted button
+      radioButtons("prev_sub",
+                   "Contacted in a Previous Campaign?",
+                   choiceNames = c("All", "No", "Yes"),
+                   choiceValues = c("all", "No", "Yes")),
+
+      actionButton("subset_button", "Sample the data")    
     ),
     
     # Main Panel
