@@ -103,6 +103,51 @@ server <- function(input, output, session) {
   # This object holds data subset
   subset_vals <- reactiveValues(data = NULL)  # NULL default
   
+  # Dynamic sliders
+  output$num1_slider <- renderUI({
+    var_values <- bank |> pull(input$num1_var)
+    sliderInput("num1_range",
+                "Range:",
+                min = min(var_values),
+                max = max(var_values),
+                value = c(min(var_values), max(var_values)))
+  })
+  
+  output$num2_slider <- renderUI({
+    var_values <- bank |> pull(input$num2_var)
+    sliderInput("num2_range",
+                "Range:",
+                min = min(var_values),
+                max = max(var_values),
+                value = c(min(var_values), max(var_values)))
+  })
+  
+  # Prevent dropdowns from choosing same variable
+  observeEvent(input$num1_var, {
+    num1 <- input$num1_var
+    num2 <- input$num2_var
+    choices <- numeric_vars
+    if (num1 != num2){
+      choices <- choices[-which(choices == num1)]
+      updateSelectizeInput(session,
+                           "num2_var",
+                           choices = choices,
+                           selected = num2)
+    }
+  })
+  observeEvent(input$num2_var, {
+    num1 <- input$num1_var
+    num2 <- input$num2_var
+    choices <- numeric_vars
+    if (num1 != num2){
+      choices <- choices[-which(choices == num2)]
+      updateSelectizeInput(session,
+                           "num1_var",
+                           choices = choices,
+                           selected = num1)
+    }
+  })
+  
   # observeEvent() to look for action button
   observeEvent(input$subset_button, {
     if(input$job_sub == "all"){
@@ -126,7 +171,11 @@ server <- function(input, output, session) {
     subset_vals$data <- bank |>
       filter(job_group %in% job_vals,
              education %in% edu_vals,
-             prev_contacted %in% prev_vals)
+             prev_contacted %in% prev_vals,
+             get(input$num1_var) >= input$num1_range[1],
+             get(input$num1_var) <= input$num1_range[2],
+             get(input$num2_var) >= input$num2_range[1],
+             get(input$num2_var) <= input$num2_range[2])
   })
 }
 
