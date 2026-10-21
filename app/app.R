@@ -4,6 +4,13 @@ library(tidyverse)
 # Read in cleaned data
 bank <- readRDS("bank_clean.rds")
 
+# Define numeric variables ("label for user" = "column")
+numeric_vars <- c("Age (years)" = "age",
+                  "Balance (euros)" = "balance",
+                  "Last Call Duration (seconds)" = "duration",
+                  "Contacts This Campaign" = "campaign",
+                  "Contacts Before This Campaign" = "previous")
+
 # Define UI for application
 ui <- fluidPage(
   # Title
@@ -30,7 +37,21 @@ ui <- fluidPage(
                    "Contacted in a Previous Campaign?",
                    choiceNames = c("All", "No", "Yes"),
                    choiceValues = c("all", "No", "Yes")),
-
+      
+      # User select first numeric variable and slider
+      selectizeInput("num1_var",
+                     "Numeric Variable 1",
+                     choices = numeric_vars,
+                     selected = "age"),
+      uiOutput("num1_slider"),
+      
+      # User select second numeric variable and slider
+      selectizeInput("num2_var",
+                     "Numeric Variable 2",
+                     choices = numeric_vars,
+                     selected = "campaign"),
+      uiOutput("num2_slider"),
+      
       actionButton("subset_button", "Sample the data")    
     ),
     
