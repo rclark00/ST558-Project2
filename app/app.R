@@ -142,7 +142,32 @@ ui <- fluidPage(
                                                     selected = "y"))
                             ),
                             h4("Summary Statistics"),
-                            tableOutput("num_table")
+                            tableOutput("num_table"),
+                            h4("Plot"),
+                            fluidRow(
+                              column(4,
+                                     radioButtons("num_plot_type",
+                                                  "Plot Type",
+                                                  choiceNames = c("Density", "Boxplot", "Scatter"),
+                                                  choiceValues = c("density", "boxplot", "scatter"))),
+                              column(4,
+                                     selectizeInput("num_color",
+                                                    "Color By",
+                                                    choices = c("None" = "none", cat_vars),
+                                                    selected = "y")),
+                              column(4,
+                                     selectizeInput("num_facet",
+                                                    "Facet By",
+                                                    choices = c("None" = "none", cat_vars),
+                                                    selected = "none"))
+                            ),
+                            # Case: second numeric variable for scatter plots
+                            conditionalPanel("input.num_plot_type == 'scatter'",
+                                             selectizeInput("num_var2",
+                                                            "Scatter Plot Y Variable",
+                                                            choices = numeric_vars,
+                                                            selected = "balance")),
+                            plotOutput("num_plot")
                    )
                  )
         )
@@ -344,6 +369,71 @@ server <- function(input, output, session) {
                 median = median(!!sym(input$num_var)),
                 sd = sd(!!sym(input$num_var)))
   }, digits = 1)
+
+  # Density, boxplot, or scatter plot of numeric variable(s)
+  output$num_plot <- renderPlot({
+    # Message prior to subsetting
+    validate(
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
+    )
+    
+    # Labels
+    num_label <- names(numeric_vars)[numeric_vars == input$num_var]
+    
+    if(input$num_plot_type == "density"){
+      g <- ggplot(subset_vals$data, aes_string(x = input$num_var)) +
+        geom_density(alpha = 0.5) +
+        labs(x = num_label,
+             y = "Density",
+             title = paste("Distribution of", num_label))
+      if(input$num_color != "none"){
+        g <- g + aes_string(fill = input$num_color)
+      }
+      
+    } else if(input$num_plot_type == "boxplot"){
+      # Boxplots need categorical variable for x-axis
+      validate(
+        need(input$num_group != "none", "Please choose a 'Summarize Across' variable to draw boxplots.")
+      )
+      group_label <- names(cat_vars)[cat_vars == input$num_group]
+      g <- ggplot(subset_vals$data, aes_string(x = input$num_group, y = input$num_var)) +
+        geom_boxplot() +
+        labs(x = group_label,
+             y = num_label,
+             title = paste(num_label, "by", group_label))
+      if(input$num_color != "none"){
+        g <- g + aes_string(fill = input$num_color)
+      }
+      
+    } else {
+      # Scatter plots need two different numeric variables
+      validate(
+        need(input$num_var != input$num_var2, "Please choose two different numeric variables.")
+      )
+      num_label2 <- names(numeric_vars)[numeric_vars == input$num_var2]
+      g <- ggplot(subset_vals$data, aes_string(x = input$num_var, y = input$num_var2)) +
+        geom_point(alpha = 0.3) +
+        labs(x = num_label,
+             y = num_label2,
+             title = paste(num_label, "vs.", num_label2))
+      if(input$num_color != "none"){
+        g <- g + aes_string(color = input$num_color)
+      }
+    }
+    
+    # Legend title color
+    if(input$num_color != "none"){
+      color_label <- names(cat_vars)[cat_vars == input$num_color]
+      g <- g + labs(fill = color_label, color = color_label)
+    }
+    
+    # Facet
+    if(input$num_facet != "none"){
+      g <- g + facet_wrap(input$num_facet)
+    }
+    
+    g
+  })
 }
 
 
