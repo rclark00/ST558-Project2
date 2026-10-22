@@ -129,7 +129,20 @@ ui <- fluidPage(
                             plotOutput("cat_plot")
                    ),
                    tabPanel("Numeric Summaries",
-                            p("(INSERT Summary statistics and plots)")
+                            fluidRow(
+                              column(6,
+                                     selectizeInput("num_var",
+                                                    "Numeric Variable",
+                                                    choices = numeric_vars,
+                                                    selected = "age")),
+                              column(6,
+                                     selectizeInput("num_group",
+                                                    "Summarize Across",
+                                                    choices = c("None" = "none", cat_vars),
+                                                    selected = "y"))
+                            ),
+                            h4("Summary Statistics"),
+                            tableOutput("num_table")
                    )
                  )
         )
@@ -309,6 +322,28 @@ server <- function(input, output, session) {
     # Tilt x-axis labels
     g + theme(axis.text.x = element_text(angle = 45, hjust = 1))
   })
+  
+  # Summary statistics (numeric with possible categorical)
+  output$num_table <- renderTable({
+    # Message prior to subsetting
+    validate(
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
+    )
+    
+    num_data <- subset_vals$data
+    
+    # Case: categorical variable ("Summarized Across") --> group
+    if(input$num_group != "none"){
+      num_data <- num_data |>
+        group_by(!!sym(input$num_group))
+    }
+    
+    num_data |>
+      summarize(n = n(),
+                mean = mean(!!sym(input$num_var)),
+                median = median(!!sym(input$num_var)),
+                sd = sd(!!sym(input$num_var)))
+  }, digits = 1)
 }
 
 
