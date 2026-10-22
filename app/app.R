@@ -11,6 +11,20 @@ numeric_vars <- c("Age (years)" = "age",
                   "Contacts This Campaign" = "campaign",
                   "Contacts Before This Campaign" = "previous")
 
+# Define categorical variables ("label for user" = "column")
+cat_vars <- c("Job Group" = "job_group",
+              "Job" = "job",
+              "Marital Status" = "marital",
+              "Education" = "education",
+              "Credit in Default" = "default",
+              "Housing Loan" = "housing",
+              "Personal Loan" = "loan",
+              "Contact Type" = "contact",
+              "Month of Last Contact" = "month",
+              "Previous Campaign Outcome" = "poutcome",
+              "Previously Contacted" = "prev_contacted",
+              "Subscribed" = "y")
+
 # Define UI for application
 ui <- fluidPage(
   # Title
@@ -52,7 +66,7 @@ ui <- fluidPage(
                      selected = "campaign"),
       uiOutput("num2_slider"),
       
-      actionButton("subset_button", "Sample the data")    
+      actionButton("subset_button", "Subset the data")    
     ),
     
     # Main Panel
@@ -90,7 +104,20 @@ ui <- fluidPage(
         tabPanel("Data Exploration",
                  tabsetPanel(
                    tabPanel("Categorical Summaries",
-                            p("(INSERT Contingency tables and bar charts)")
+                            fluidRow(
+                              column(6,
+                                     selectizeInput("cat_var1",
+                                                    "Variable 1",
+                                                    choices = cat_vars,
+                                                    selected = "job_group")),
+                              column(6,
+                                     selectizeInput("cat_var2",
+                                                    "Variable 2 (optional)",
+                                                    choices = c("None" = "none", cat_vars),
+                                                    selected = "y"))
+                            ),
+                            h4("Contingency Table"),
+                            tableOutput("cat_table")
                    ),
                    tabPanel("Numeric Summaries",
                             p("(INSERT Summary statistics and plots)")
@@ -185,7 +212,7 @@ server <- function(input, output, session) {
   output$data_table <- DT::renderDataTable({
     # Default message
     validate(
-      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Sample the data' button.")
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
     )
     DT::datatable(data = subset_vals$data,
                   options = list(pageLength = 10),
@@ -201,6 +228,37 @@ server <- function(input, output, session) {
       write_csv(subset_vals$data, file)
     }
   )
+  # One-way or two-way contingency table
+  output$cat_table <- renderTable({
+    # Message prior to subsetting
+    validate(
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the Data' button.")
+    )
+    # Case: Same variable chosen twice
+    validate(
+      need(input$cat_var1 != input$cat_var2, "Please choose two different variables.")
+    )
+    
+    if(input$cat_var2 == "none"){
+      # One-way table
+      subset_vals$data |>
+        group_by(!!sym(input$cat_var1)) |>
+        summarize(count = n())
+    } else {
+      # Two-way table
+      two_way <- subset_vals$data |>
+        group_by(!!sym(input$cat_var1), !!sym(input$cat_var2)) |>
+        summarize(count = n(), .groups = "drop") |>
+        pivot_wider(names_from = !!sym(input$cat_var2), values_from = count, values_fill = 0)
+      
+      # Case: Variable 2 = Subscribed --> Add %
+      if(input$cat_var2 == "y"){
+        two_way <- two_way |>
+          mutate(pct_yes = round(100 * yes / (no + yes), 1))
+      }
+      two_way
+    }
+  }, digits = 1)
 }
 
 
