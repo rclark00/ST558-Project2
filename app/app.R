@@ -33,7 +33,7 @@ ui <- fluidPage(
   # Side Bar
   sidebarLayout(
     sidebarPanel(
-      h3("Subset the Data"),
+      h3("Subset the data"),
       # Job group button
       radioButtons("job_sub",
                    "Job Group",
@@ -117,7 +117,16 @@ ui <- fluidPage(
                                                     selected = "y"))
                             ),
                             h4("Contingency Table"),
-                            tableOutput("cat_table")
+                            tableOutput("cat_table"),
+                            h4("Bar Chart"),
+                            # Show bar type when there's a fill variable
+                            conditionalPanel("input.cat_var2 != 'none'",
+                                             radioButtons("bar_position",
+                                                          "Bar Type",
+                                                          choiceNames = c("Stacked", "Side-by-side", "Filled (proportions)"),
+                                                          choiceValues = c("stack", "dodge", "fill"),
+                                                          inline = TRUE)),
+                            plotOutput("cat_plot")
                    ),
                    tabPanel("Numeric Summaries",
                             p("(INSERT Summary statistics and plots)")
@@ -232,7 +241,7 @@ server <- function(input, output, session) {
   output$cat_table <- renderTable({
     # Message prior to subsetting
     validate(
-      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the Data' button.")
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
     )
     # Case: Same variable chosen twice
     validate(
@@ -259,6 +268,47 @@ server <- function(input, output, session) {
       two_way
     }
   }, digits = 1)
+  
+  # Bar chart
+  output$cat_plot <- renderPlot({
+    # Message prior to subsetting
+    validate(
+      need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
+    )
+    # Case: Same variable chosen twice
+    validate(
+      need(input$cat_var1 != input$cat_var2, "Please choose two different variables.")
+    )
+    
+    # Variable 1 labels
+    x_label <- names(cat_vars)[cat_vars == input$cat_var1]
+    
+    if(input$cat_var2 == "none"){
+      # Single variable: bar chart of counts
+      g <- ggplot(subset_vals$data, aes_string(x = input$cat_var1)) +
+        geom_bar() +
+        labs(x = x_label,
+             y = "Number of Clients",
+             title = paste("Clients by", x_label))
+    } else {
+      # Two variables: Variable 2 fills the bars
+      fill_label <- names(cat_vars)[cat_vars == input$cat_var2]
+      if(input$bar_position == "fill"){
+        y_label <- "Proportion of Clients"
+      } else {
+        y_label <- "Number of Clients"
+      }
+      g <- ggplot(subset_vals$data, aes_string(x = input$cat_var1, fill = input$cat_var2)) +
+        geom_bar(position = input$bar_position) +
+        labs(x = x_label,
+             y = y_label,
+             title = paste(fill_label, "by", x_label)) +
+        scale_fill_discrete(fill_label)
+    }
+    
+    # Tilt x-axis labels
+    g + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  })
 }
 
 
