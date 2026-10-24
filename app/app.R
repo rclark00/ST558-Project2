@@ -75,17 +75,33 @@ ui <- fluidPage(
         ### ABOUT TAB ###
         tabPanel("About",
                  h3("Purpose of the App"),
-                 p("(PURPOSE)"),
+                 p("This app explores the 'Banking Dataset - Marketing Targets' on Kaggle.",
+                   "The data is sourced from the phone marketing campaigns of a Portuguese bank.",
+                   "Select the clients then use tables and plots to observe their",
+                   "subscription paterns to a term deposit."),
                  
                  h3("The Data"),
-                 p("(DESCRIBE DATA)"),
+                 p("45,211 bank clients were contacted from 2008 to 2010.", 
+                   "Employees recorded info about the client, including 17 variables, their most recent call,",
+                   "and earlier contacts. The outcome was if the client subscribed to a term deposit.",
+                   "About 12% of the people subscribed."),
+        
                  p("Source:",
                    a("Banking Dataset on Kaggle",
                      href = "https://www.kaggle.com/datasets/prakharrathi25/banking-dataset-marketing-targets"),
                    ),
-                 p("(NOTES?)"),
+                 h3("App Features"),
+                 p("Sidebar: choose a subset of clients, then click 'Subset the data'."),
+                 p("Data Download: view the subset you've selected and download csv file of it."),
+                 p("Data Exploration: two subtabs to view contingency tables, summary statistics,", 
+                   "and plots for different variable types and combinations."),
                  
-                 # Image?
+                 # Image
+                 tags$figure(
+                   tags$img(src = "money.jpg",
+                            width = 500,
+                            alt = "Money")
+                 )
 
         ),
         
