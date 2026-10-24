@@ -118,15 +118,24 @@ ui <- fluidPage(
                             ),
                             h4("Contingency Table"),
                             tableOutput("cat_table"),
-                            h4("Bar Chart"),
+                            h4("Plot"),
+                            # Choose between bar or heatmap
+                            radioButtons("cat_plot_type",
+                                         "Plot Type",
+                                         choiceNames = c("Bar Chart", "Heatmap (% Subscribed)"),
+                                         choiceValues = c("bar", "heatmap"),
+                                         inline = TRUE),
                             # Show bar type when there's a fill variable
-                            conditionalPanel("input.cat_var2 != 'none'",
+                            conditionalPanel("input.cat_plot_type == 'bar' && input.cat_var2 != 'none'",
                                              radioButtons("bar_position",
                                                           "Bar Type",
                                                           choiceNames = c("Stacked", "Side-by-side", "Filled (proportions)"),
                                                           choiceValues = c("stack", "dodge", "fill"),
                                                           inline = TRUE)),
-                            shinycssloaders::withSpinner(plotOutput("cat_plot"))
+                            shinycssloaders::withSpinner(plotOutput("cat_plot")),
+                            # Heatmap note
+                            conditionalPanel("input.cat_plot_type == 'heatmap'",
+                                             p(em("Note: Check the contingency table above for group sizes.")))
                    ),
                    tabPanel("Numeric Summaries",
                             fluidRow(
@@ -331,7 +340,33 @@ server <- function(input, output, session) {
     # Variable 1 labels
     x_label <- names(cat_vars)[cat_vars == input$cat_var1]
     
-    if(input$cat_var2 == "none"){
+    # Heatmap of % subscribed
+    if(input$cat_plot_type == "heatmap"){
+      # Case: Need a second variable
+      validate(
+        need(input$cat_var2 != "none", "Please choose a Variable 2")
+      )
+      # Case: Subscribed can't be chosen
+      validate(
+        need(input$cat_var1 != "y" & input$cat_var2 != "y",
+             "The heatmap shows % subscribed, so choose variables other than Subscribed.")
+      )
+      y_label <- names(cat_vars)[cat_vars == input$cat_var2]  
+    
+      # Percent subscribed for each var combination
+      heat_data <- subset_vals$data |>
+        group_by(!!sym(input$cat_var1), !!sym(input$cat_var2)) |>
+        summarize(pct_yes = 100 * mean(y == "yes"), .groups = "drop")
+      
+      g <- ggplot(heat_data, aes_string(x = input$cat_var1, y = input$cat_var2, fill = "pct_yes")) +
+        geom_tile(color = "white") +
+        geom_text(aes(label = round(pct_yes))) +
+        scale_fill_gradient("% Subscribed", low = "white", high = "steelblue") +
+        labs(x = x_label,
+             y = y_label,
+             title = paste("Subscription Rate by", x_label, "and", y_label))
+    }    
+    else if(input$cat_var2 == "none"){
       # Single variable: bar chart of counts
       g <- ggplot(subset_vals$data, aes_string(x = input$cat_var1)) +
         geom_bar() +
