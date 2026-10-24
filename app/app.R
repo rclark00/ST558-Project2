@@ -126,7 +126,7 @@ ui <- fluidPage(
                                                           choiceNames = c("Stacked", "Side-by-side", "Filled (proportions)"),
                                                           choiceValues = c("stack", "dodge", "fill"),
                                                           inline = TRUE)),
-                            plotOutput("cat_plot")
+                            shinycssloaders::withSpinner(plotOutput("cat_plot"))
                    ),
                    tabPanel("Numeric Summaries",
                             fluidRow(
@@ -143,6 +143,7 @@ ui <- fluidPage(
                             ),
                             h4("Summary Statistics"),
                             tableOutput("num_table"),
+                            p(em("Note: SD shows NA for any group with only one client.")),
                             h4("Plot"),
                             fluidRow(
                               column(4,
@@ -167,7 +168,7 @@ ui <- fluidPage(
                                                             "Scatter Plot Y Variable",
                                                             choices = numeric_vars,
                                                             selected = "balance")),
-                            plotOutput("num_plot")
+                            shinycssloaders::withSpinner(plotOutput("num_plot"))
                    )
                  )
         )
@@ -281,6 +282,10 @@ server <- function(input, output, session) {
     validate(
       need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
     )
+    # Message if the subset has no rows
+    validate(
+      need(nrow(subset_vals$data) > 0, "No clients match this subset.")
+    )    
     # Case: Same variable chosen twice
     validate(
       need(input$cat_var1 != input$cat_var2, "Please choose two different variables.")
@@ -296,7 +301,8 @@ server <- function(input, output, session) {
       two_way <- subset_vals$data |>
         group_by(!!sym(input$cat_var1), !!sym(input$cat_var2)) |>
         summarize(count = n(), .groups = "drop") |>
-        pivot_wider(names_from = !!sym(input$cat_var2), values_from = count, values_fill = 0)
+        pivot_wider(names_from = !!sym(input$cat_var2), values_from = count, values_fill = 0,
+                    names_expand = TRUE)
       
       # Case: Variable 2 = Subscribed --> Add %
       if(input$cat_var2 == "y"){
@@ -313,6 +319,10 @@ server <- function(input, output, session) {
     validate(
       need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
     )
+    # Message if the subset has no rows
+    validate(
+      need(nrow(subset_vals$data) > 0, "No clients match this subset.")
+    )    
     # Case: Same variable chosen twice
     validate(
       need(input$cat_var1 != input$cat_var2, "Please choose two different variables.")
@@ -354,6 +364,10 @@ server <- function(input, output, session) {
     validate(
       need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
     )
+    # Message if the subset has no rows
+    validate(
+      need(nrow(subset_vals$data) > 0, "No clients match this subset.")
+    )    
     
     num_data <- subset_vals$data
     
@@ -376,6 +390,10 @@ server <- function(input, output, session) {
     validate(
       need(!is.null(subset_vals$data), "Please choose your subset on the sidebar and click the 'Subset the data' button.")
     )
+    # Message if the subset has no rows
+    validate(
+      need(nrow(subset_vals$data) > 0, "No clients match this subset.")
+    )    
     
     # Labels
     num_label <- names(numeric_vars)[numeric_vars == input$num_var]
