@@ -7,7 +7,9 @@ abstract: |
 format: html
 ---
 
-(narrative?)
+This document takes a first look into the 'Banking Dataset - Marketing Targets' downloaded from Kaggle. We clean the data and delve into its contents, generating summary statistics and plots that will ultimately be used to help create a Shiny app. The goal is not only to identify interesting and useful findings for potential users of the app, but to establish working code for building the app.
+
+We begin by reading in the data. The dataset download contains two files: `train.csv` and `test.csv`. 
 
 ```{r}
 #| message: false
@@ -29,11 +31,11 @@ bank <- distinct(bank_combined)
 nrow(bank)
 ```
 
-We see that from our $49,732$ rows, only $45,211$ of them are unique. That means $49,732 - 45,211 = 4521$ of the rows are duplicates. We removed these duplicates so now `bank` contains only the unique data.
+We see that from our $49,732$ rows, only $45,211$ of them are unique. That means $49,732 - 45,211 = 4521$ of the rows are duplicates. This is the same number of rows as in the `test.csv` file. So as this file name suggests, they likely were a test subset of the complete dataset that was left in. We removed these duplicates so now `bank` contains only the unique data.
 
 While not a necessary change, we will create the `job_group` variable that collapses the 12 job categories into 4 broad groups: White-collar, Blue-collar/Service, Not working, and Unknown. This is to help tidy up the radio button on our Shiny app, as well as make plots easier to interpret. That said, we will retain the 12 categories under the `job` variable for users desiring those details.
 
-(check this narrative) Importantly, the variable `pdays`, which represents the number of days since the client was last contacted in a previous campaign, will take the value `-1` if the individual was "never contacted before". This negative value will impact the slider as well as computations on this variable. Since this information is still valuable, we create a factor column (`prev_contacted`) to indicate `-1` with `"No"`. Then we recode `-1` to `NA`, as well as leave `pdays` out of slider and dropdown options, to avoid the aforementioned issues. 
+Importantly, the variable `pdays`, which represents the number of days since the client was last contacted in a previous campaign, will take the value `-1` if the individual was "never contacted before". This negative value will impact the slider as well as computations on this variable. Since this information is still valuable, we create a factor column (`prev_contacted`) to indicate `-1` with `"No"`. Then we recode `-1` to `NA`, as well as leave `pdays` out of slider and dropdown options, to avoid the aforementioned issues. 
 
 ```{r}
 # Clean data
@@ -75,7 +77,7 @@ table(bank$y)
 # How many clients fall in each job group?
 table(bank$job_group)
 ```
-(comment on table)
+Note that `y` is the response variable defined as whether the client subscribed to a term deposit. Clearly, subscribers are a minority of the sample. `White-collar` workers make up a majority of the sample, followed by `Blue-collar/Service` workers.
 
 Next we will build two-way contingency tables. We'll examine how subscriptions vary by job group and if they were previously contacted.
 
@@ -95,7 +97,9 @@ bank |>
   mutate(pct_yes = round(100 * yes / (no + yes), 1))
 ```
 
-(comment on table)
+Interestingly, the small `Not working` group had the greatest percentage of subscriptions at $21.9\%$. `Blue-collar/Service` had the lowest percent at $7.8\%$. And while there's a large discrepancy in whether or not someone was previously contacted, those who were contacted prior were much more likely to subscribe. 
+
+Next we generate some basic descriptive statistics for numeric variables of `age`, `balance`, `duration`, and `campaign` and the outcome of subscription.
 
 ```{r}
 # Mean, median, and SD of four numeric variables by subscription outcome
@@ -109,9 +113,9 @@ bank |>
             .groups = "drop")
 ```
 
-(comment)
+We can see that average age was pretty similar between those who subscribed and those who didn't (around 40 years old). Campaign was also similar, with subscribers contacted slightly less often. Those who subscribed had a greater account balance, which seems intuitive with having more funds available to deposit. Also making sense is that those who subscribed spent a longer duration speaking on the phone. 
 
-Now we will generate several figures to further explore the data, starting with a stacked bar chart of subscription rates by job group.
+Now we will generate several figures to further explore the data through visualization, starting with a stacked bar chart of subscription rates by job group.
 
 ```{r}
 ggplot(bank, aes(x = job_group, fill = y)) +
@@ -122,7 +126,7 @@ ggplot(bank, aes(x = job_group, fill = y)) +
   scale_fill_discrete("Subscribed")
 ```
 
-Clients not working appear to have the highest subscription rate, while blue-collar and service workers have the lowest.
+Clients in the `Not working` group appear to have the highest subscription rate while `Blue-collar/Service` had the lowest, which confirms what we noticed before.
 
 Next we plot subscriptions by level of education.
 
@@ -135,7 +139,7 @@ ggplot(bank, aes(x = education, fill = y)) +
   scale_fill_discrete("Subscribed")
 ```
 
-Clearly, the majority of the bank's clients possess a secondary education. Therefore, it intuitively follows that, in terms of raw counts, most subscribers have a secondary education. However, estimating from the figure, it appears that the rate of subscription is higher in the tertiary group, which has only a couple hundred fewer subscribers yet about ten thousand fewer non-subscribers. This exemplifies how raw numbers can be misleading.
+Clearly, the majority of the bank's clients possess a `secondary` education. Therefore, it's not surprising that, in terms of raw counts, most subscribers have a `secondary` education. However, estimating from the figure, it appears that the rate of subscription is higher in the `tertiary` group, which has only a couple hundred fewer subscribers yet about ten thousand fewer non-subscribers.
 
 Next is a density plot of age by subscription status.
 
@@ -148,7 +152,7 @@ ggplot(bank, aes(x = age, fill = y)) +
   scale_fill_discrete("Subscribed")
 ```
 
-The two densities are quite similar in shape. Both subscribers and non-subscribers are right-skewed with a peak around 30 years old. Non-subscribers are concentrated between roughly 30 to 55 years old, with naturally sharper slopes that non-subscribers outside of this age range. The subscribers have quite a long tail past 75.
+The two densities are quite similar in shape. Both subscribers and non-subscribers are right-skewed with a peak around 30 years old. Non-subscribers are concentrated between roughly 30 to 55 years old, with naturally sharper slopes than non-subscribers outside of this age range. The subscribers have quite a long tail past 75.
 
 We then create a boxplot for call duration by job group and subscription.
 
@@ -161,7 +165,7 @@ ggplot(bank, aes(x = job_group, y = duration, fill = y)) +
   scale_fill_discrete("Subscribed")
 ```
 
-Call duration has a noticeably larger IQR for those who subscribed across all job groups, all with higher medians than the non-subscribers. Blue-collar/Service had the highest median of the subscribers, while the boxes of the non-subscribers were very similar. No outliers were detected below Q1. Non-subscribers, being the larger group with the smaller IQR, had wider outlier ranges than subscribers, respectively.
+Call duration has a noticeably larger IQR for those who subscribed across all job groups, all with higher medians than the non-subscribers. `Blue-collar/Service` had the highest median of the subscribers, while the boxes of the non-subscribers were very similar. No outliers were detected below Q1. Non-subscribers, being the larger group with the smaller IQR, had wider outlier ranges than subscribers, respectively.
 
 The fifth plot we'll make is a faceted scatterplot of age vs. balance.
 
@@ -177,7 +181,7 @@ ggplot(bank |> filter(balance < 20000),
   scale_color_discrete("Subscribed")
 ```
 
-We observe fairly dense clouds with balances near zero for all job groups except Unknown, with White-collar being the most dense. While we cap the balance so as not to stretch out the plots, White-collar also seems to have greater density around the cap (probably influenced by group size). The two working groups have fairly strong cut offs around age 60, while Not working appears the most spread out across the age range. The overlap between subscribers and non-subscribers suggest that balance is not great for distinguishing them.
+We observe fairly dense clouds with balances near zero for all job groups except Unknown, with `White-collar` being the most dense. While we cap the balance so as not to stretch out the plots, `White-collar` also seems to have greater density around the cap (probably influenced by group size). The two working groups have fairly strong cut offs around age 60, while `Not working` appears the most spread out across the age range. The overlap between subscribers and non-subscribers suggests that balance is not great for distinguishing them.
 
 Lastly, we make a heatmap of subscription rate by month and job group.
 
@@ -195,6 +199,8 @@ bank |>
        title = "Subscription Rate by Month and Job Group")
 ```
 
-Here we track the subscription rates over the course of the (pooled) years for the job groups (excluding Unknown due to small sample size). March stands out in the first half of the year as having the greatest subscriber rates, regardless of job category. Subscriber rates generally pick up again at the end of the year, with an odd exception in November. Between groups, Blue-collar/Service appears to simultaneously have the lowest rates for most months yet the highest recorded rates. Importantly, this map misses call volume, which limits our interpretation of these rates.
+Here we track the subscription rates over the course of the (pooled) years for the job groups (excluding `Unknown` due to small sample size). March stands out in the first half of the year as having the greatest subscriber rates, regardless of job category. Subscriber rates generally pick up again at the end of the year, with an odd exception in November. Between groups, `Blue-collar/Service` appears to simultaneously have the lowest rates for most months yet the highest recorded rates. Importantly, this map misses call volume, which limits our interpretation of these rates.
 
-(Conclusion)
+#### Conclusion
+
+In summary, we have performed an exploratory data analysis on the 'Banking Dataset - Marketing Targets' found on Kaggle. We removed duplicate data and created four larger job categories that we used in analyses to help make findings easier to interpret. We generated tables and figures from these data and made several observations. However, such observations were fairly limited since they were not the purpose of this project. Instead, this file serves to establish an informal sense of the data we're working with and create/test code that we will use in a Shiny app of this dataset. 
