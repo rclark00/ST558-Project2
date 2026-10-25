@@ -152,7 +152,7 @@ ggplot(bank, aes(x = age, fill = y)) +
   scale_fill_discrete("Subscribed")
 ```
 
-The two densities are quite similar in shape. Both subscribers and non-subscribers are right-skewed with a peak around 30 years old. Non-subscribers are concentrated between roughly 30 to 55 years old, with naturally sharper slopes than non-subscribers outside of this age range. The subscribers have quite a long tail past 75.
+The two densities are quite similar in shape. Both subscribers and non-subscribers are right-skewed with a peak around 30 years old. Non-subscribers are concentrated between roughly 30 to 55 years old, with naturally sharper slopes than subscribers outside of this age range. The subscribers have quite a long tail past 75.
 
 We then create a boxplot for call duration by job group and subscription.
 
